@@ -1,0 +1,52 @@
+ 
+¿Cómo detectar que tengo una infección en el ordenador, utilizando PowerShell:?
+
+-----------------------------------------------------------------
+Posible 1:
+-----------------------------------------------------------------
+# Obtener los procesos que estan ejecutando notepad
+$actual = Get-Process -Name notepad | select name
+
+# Realizar un bucle constante donde compara si hay nuevos procesos llamados notepad, si se abre algo nuevo, se detectaría.
+for(1)
+{
+    $nuevos = Get-Process -Name notepad | select name
+    Compare-Object -Property name $actual $nuevos
+    # Tras compararlos, actualizar la lista actual para no entrar en un bucle constante al detectar un nuevo notepad
+    $actual = Get-Process -Name notepad | select name
+    Start-Sleep -Seconds 5
+}
+ 
+
+-----------------------------------------------------------------
+Posible 2:
+-----------------------------------------------------------------
+# Localizar los nombres de procesos mediante los IDs de los hilos
+foreach($hilo in (Get-WmiObject -Class Win32_Thread | select Handle,ProcessHandle)) {
+"ID hilo: " + $hilo.Handle + " - Identificador del hilo: " + $hilo.ProcessHandle + " - Nombre del proceso: " + (Get-Process -id $hilo.ProcessHandle).name
+}
+ 
+
+
+-----------------------------------------------------------------
+Posible 3: 
+-----------------------------------------------------------------
+# Mirar todos los hilos en ejecución y sacar un mensaje si se detecta alguno que tenga referencia a un notepad
+foreach($hilo in (Get-WmiObject -Class Win32_Thread | select Handle,ProcessHandle)) {
+
+if((Get-Process -id $hilo.ProcessHandle).name -match "notepad") { "¡¡Detectado notepad!! - ID hilo: " + $hilo.Handle + " - Idenfiticador del hilo: " + $hilo.ProcessHandle }
+
+}
+ 
+
+
+Posible 4: 
+# Bucle que mira constantemente el número de hilos que se encuentran corriendo en el ordenador cada 5 segundos.
+while(1)
+{
+Get-Date
+"Numero de hilos actualmente: " + (Get-Process | select Threads).count
+"____________________________________________"
+
+Start-Sleep -Seconds 5
+} 
